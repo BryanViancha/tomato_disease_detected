@@ -1,0 +1,23 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+
+# Jupyter Notebooks
+.ipynb_checkpoints/
+
+# PyCharm
+.idea/
+
+# Anaconda
+.conda/
+.condarc
+.continuum/
+
+# Logs
+*.log
+
+# System files
+.DS_Store
+Thumbs.db
