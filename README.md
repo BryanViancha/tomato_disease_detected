@@ -19,9 +19,9 @@ Este proyecto utiliza técnicas de Deep Learning para detectar y clasificar enfe
 
 1. Clonar el repositorio:
    ``` https://github.com/BryanViancha/tomato_disease_detected.git```
-""
 2. Acceder al repositorio ``` cd tomato_disease_detected```
 3. Para instalar todos los paquetes, correr el siguente comando
-
    ```pip install -r requirements.txt```
+4. Creacion de archivo requirements, listado de las las bibliotecas y paquetes usados
+```pip freeze > requirements.txt```
 

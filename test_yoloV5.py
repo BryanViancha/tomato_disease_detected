@@ -43,17 +43,17 @@ def visualize_detections(image_path, predictions):
 
     return output_path
 
-
+#Endpoint para realizar predicciones sobre imágenes de hojas.
 @app.route('/testYoloV5', methods=['POST'])
 def predict():
     if 'file' not in request.files:
-        app.logger.error('No file provided')
-        return jsonify({'error': 'No file provided'}), 400
+        app.logger.error('No se proporcionó ningún archivo')
+        return jsonify({'error': 'No se proporcionó ningún archivo'}), 400
 
     file = request.files['file']
     if file.filename == '':
-        app.logger.error('No file selected')
-        return jsonify({'error': 'No file selected'}), 400
+        app.logger.error('No se selecciono un archivo')
+        return jsonify({'error': 'No se selecciono un archivo'}), 400
 
     try:
         # Guardar la imagen

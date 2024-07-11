@@ -16,21 +16,14 @@ else:
 
 
 def preprocess_image(image):
-    """
-    Preprocesa una imagen para que sea compatible con el modelo.
-    Redimensiona la imagen a 224x224 píxeles y normaliza los valores de los píxeles.
-    """
     image = cv2.resize(image, (224, 224))  # Redimensionar la imagen a 224x224 píxeles
     image = image / 255.0  # Normalizar los valores de los píxeles a [0, 1]
     image = np.expand_dims(image, axis=0)  # Expandir las dimensiones para que sea compatible con el modelo
     return image
 
-
+#Endpoint para realizar predicciones sobre imágenes de hojas.
 @app.route('/testCnns', methods=['POST'])
 def predict():
-    """
-    Endpoint para realizar predicciones sobre imágenes de hojas.
-    """
     file = request.files['file']  # Obtener el archivo de imagen desde la solicitud
     image = np.fromfile(file, np.uint8)  # Leer la imagen desde el archivo
     image = cv2.imdecode(image, cv2.IMREAD_COLOR)  # Decodificar la imagen
