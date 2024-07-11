@@ -24,4 +24,8 @@ Este proyecto utiliza técnicas de Deep Learning para detectar y clasificar enfe
    ```pip install -r requirements.txt```
 4. Creacion de archivo requirements, listado de las las bibliotecas y paquetes usados
 ```pip freeze > requirements.txt```
+5. Clonar el repositorio de YoloV5 en el proyecto```git clone https://github.com/ultralytics/yolov5.git```
+
+6. Entrar a la carpeta de YoloV5```cd yolov5```
+
 
