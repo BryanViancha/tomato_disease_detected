@@ -62,4 +62,4 @@ def main(img_path):
     cv2.destroyAllWindows()
 
 if __name__ == "__main__":
-    main("../data_yolo/validation/test_image1.jpg")
+    main("../src/data_yolo/validation/test_image1.jpg")

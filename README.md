@@ -10,13 +10,18 @@ Este proyecto utiliza técnicas de Deep Learning para detectar y clasificar enfe
 - TensorFlow
 - OpenCv
 - Numpy
+- PyTorch
+- ultralytics
+- matplotlib
 
 
 ## Instalación
 
 1. Clonar el repositorio:
    ``` https://github.com/BryanViancha/tomato_disease_detected.git```
-2. Para instalar todos los paquetes, correr el siguente comando
+""
+2. Acceder al repositorio ``` cd tomato_disease_detected```
+3. Para instalar todos los paquetes, correr el siguente comando
 
    ```pip install -r requirements.txt```
 

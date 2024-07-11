@@ -17,6 +17,7 @@ MODEL_PATH = 'yolov5/runs/train/exp/weights/best.pt'
 YOLOV5_PATH = 'yolov5'
 model = torch.hub.load(YOLOV5_PATH, 'custom', path=MODEL_PATH, source='local')  # source='local' asegura que se use el repositorio clonado localmente
 
+
 def visualize_detections(image_path, predictions):
     # Cargar la imagen
     img = Image.open(image_path)
@@ -42,7 +43,8 @@ def visualize_detections(image_path, predictions):
 
     return output_path
 
-@app.route('/test', methods=['POST'])
+
+@app.route('/testYoloV5', methods=['POST'])
 def predict():
     if 'file' not in request.files:
         app.logger.error('No file provided')
@@ -77,6 +79,7 @@ def predict():
     except Exception as e:
         app.logger.error('Error during prediction: %s', e)
         return jsonify({'error': str(e)}), 500
+
 
 if __name__ == '__main__':
     os.makedirs('uploads', exist_ok=True)
