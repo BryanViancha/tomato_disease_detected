@@ -1,83 +1,147 @@
-from flask import Flask, request, jsonify, send_file
-from PIL import Image
-import torch
 import os
-import logging
-import matplotlib.pyplot as plt
 import matplotlib.patches as patches
+import matplotlib.pyplot as plt
+import torch
+from PIL import Image
+from flask import Flask, request, jsonify
 
 app = Flask(__name__)
 
-# Configurar el registro de errores
-logging.basicConfig(level=logging.DEBUG)
+YOLOV5_PATH = os.path.join(os.path.dirname(__file__), 'yolov5')
+MODEL_PATH = os.path.join(os.path.dirname(__file__), 'yolov5/runs/train/exp2/weights/best.pt')
 
-# Ruta al archivo de pesos del modelo
-MODEL_PATH = 'yolov5/runs/train/exp/weights/best.pt'
-# Ruta al repositorio YOLOv5 local
-YOLOV5_PATH = 'yolov5'
-model = torch.hub.load(YOLOV5_PATH, 'custom', path=MODEL_PATH, source='local')  # source='local' asegura que se use el repositorio clonado localmente
+# Cargar el modelo YOLOv5
+model = torch.hub.load(YOLOV5_PATH, 'custom', path=MODEL_PATH, source='local')
+
+# def visualize_detections(image_path, predictions):
+#     img = Image.open(image_path)
+#     fig, ax = plt.subplots()
+#     ax.imshow(img)
+#
+#     for pred in predictions:
+#         xmin, ymin, xmax, ymax = pred['bbox']
+#         label = pred['name']
+#         confidence = pred['confidence']
+#         width, height = xmax - xmin, ymax - ymin
+#         rect = patches.Rectangle((xmin, ymin), width, height, linewidth=2, edgecolor='r', facecolor='none')
+#         ax.add_patch(rect)
+#         ax.text(xmin, ymin, f"{label} ({confidence:.2f})", bbox=dict(facecolor='yellow', alpha=0.5))
+#
+#     output_path = os.path.join('uploads', 'detections.png')
+#     plt.savefig(output_path)
+#     plt.close(fig)
+#
+#     return output_path
+#
+#
+# @app.route('/testYoloV5', methods=['POST'])
+# def predict():
+#     if 'file' not in request.files:
+#         return jsonify({'error': 'No file provided'}), 400
+#
+#     file = request.files['file']
+#     if file.filename == '':
+#         return jsonify({'error': 'No file selected'}), 400
+#
+#     try:
+#         # Guardar el archivo
+#         file_path = os.path.join('uploads', file.filename)
+#         file.save(file_path)
+#
+#         # Realizar la predicción
+#         results = model(file_path)
+#
+#         # Depuración: Verificar el contenido de results
+#         print(results)
+#
+#         predictions = []
+#         for result in results.xyxy[0]:  # results.xyxy[0] contiene las detecciones
+#             xmin, ymin, xmax, ymax, conf, cls = result[:6]
+#             predictions.append({
+#                 'bbox': [xmin.item(), ymin.item(), xmax.item(), ymax.item()],
+#                 'confidence': conf.item(),
+#                 'class': int(cls.item()),
+#                 'name': model.names[int(cls.item())]
+#             })
+#
+#         # Eliminar el archivo temporal
+#         os.remove(file_path)
+#
+#         return jsonify({'predictions': predictions})
+#     except Exception as e:
+#         # Depuración: Imprimir el error
+#         print(f"Error: {e}")
+#         return jsonify({'error': str(e)}), 500
+#
+#
+# if __name__ == '__main__':
+#     os.makedirs('uploads', exist_ok=True)
+#     app.run(host='0.0.0.0', port=5000)
+
+# Colores para cada clase
+colors = {
+    'minador': 'blue',
+    'alternaria': 'red',
+    'hojaSana': 'green'
+}
 
 
 def visualize_detections(image_path, predictions):
-    # Cargar la imagen
     img = Image.open(image_path)
-
-    # Crear una figura y un eje
     fig, ax = plt.subplots()
-
-    # Mostrar la imagen
     ax.imshow(img)
 
-    # Dibujar las cajas delimitadoras
     for pred in predictions:
-        xmin, ymin, xmax, ymax = pred['xmin'], pred['ymin'], pred['xmax'], pred['ymax']
+        xmin, ymin, xmax, ymax = pred['bbox']
+        label = pred['name']
+        confidence = pred['confidence']
         width, height = xmax - xmin, ymax - ymin
-        rect = patches.Rectangle((xmin, ymin), width, height, linewidth=2, edgecolor='r', facecolor='none')
+        rect = patches.Rectangle((xmin, ymin), width, height, linewidth=2, edgecolor=colors[label], facecolor='none')
         ax.add_patch(rect)
-        ax.text(xmin, ymin, pred['name'], bbox=dict(facecolor='yellow', alpha=0.5))
+        ax.text(xmin, ymin, f"{label} ({confidence:.2f})", bbox=dict(facecolor='yellow', alpha=0.5))
 
-    # Guardar la imagen con las detecciones
     output_path = os.path.join('uploads', 'detections.png')
     plt.savefig(output_path)
     plt.close(fig)
 
     return output_path
 
-#Endpoint para realizar predicciones sobre imágenes de hojas.
+
 @app.route('/testYoloV5', methods=['POST'])
 def predict():
     if 'file' not in request.files:
-        app.logger.error('No se proporcionó ningún archivo')
-        return jsonify({'error': 'No se proporcionó ningún archivo'}), 400
+        return jsonify({'error': 'No file provided'}), 400
 
     file = request.files['file']
     if file.filename == '':
-        app.logger.error('No se selecciono un archivo')
-        return jsonify({'error': 'No se selecciono un archivo'}), 400
+        return jsonify({'error': 'No file selected'}), 400
 
     try:
-        # Guardar la imagen
+        # Guardar el archivo
         file_path = os.path.join('uploads', file.filename)
         file.save(file_path)
 
         # Realizar la predicción
-        img = Image.open(file_path)
-        results = model(img)
+        results = model(file_path)
 
-        # Obtener las predicciones en formato JSON
-        predictions = results.pandas().xyxy[0].to_dict(orient="records")
+        predictions = []
+        for result in results.xyxy[0]:  # results.xyxy[0] contiene las detecciones
+            xmin, ymin, xmax, ymax, conf, cls = result[:6]
+            predictions.append({
+                'bbox': [xmin.item(), ymin.item(), xmax.item(), ymax.item()],
+                'confidence': conf.item(),
+                'class': int(cls.item()),
+                'name': model.names[int(cls.item())]
+            })
 
-        # Visualizar las detecciones
-        output_path = visualize_detections(file_path, predictions)
+        # Visualizar detecciones
+        output_image_path = visualize_detections(file_path, predictions)
 
-        # Eliminar la imagen después de la predicción
+        # Eliminar el archivo temporal
         os.remove(file_path)
 
-        # Devolver la imagen con las detecciones
-        return send_file(output_path, mimetype='image/png')
-
+        return jsonify({'predictions': predictions, 'detection_image': output_image_path})
     except Exception as e:
-        app.logger.error('Error during prediction: %s', e)
         return jsonify({'error': str(e)}), 500
 
 
