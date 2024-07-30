@@ -7,8 +7,12 @@ from flask import Flask, request, jsonify
 
 app = Flask(__name__)
 
+@app.route('/')
+def index():
+    return "La aplicación Flask está funcionando."
+
 YOLOV5_PATH = os.path.join(os.path.dirname(__file__), 'yolov5')
-MODEL_PATH = os.path.join(os.path.dirname(__file__), 'yolov5/runs/train/exp2/weights/best.pt')
+MODEL_PATH = os.path.join(os.path.dirname(__file__), 'yolov5/runs/train/exp/weights/best.pt')
 
 # Cargar el modelo YOLOv5
 model = torch.hub.load(YOLOV5_PATH, 'custom', path=MODEL_PATH, source='local')
@@ -123,6 +127,8 @@ def predict():
 
         # Realizar la predicción
         results = model(file_path)
+        print('results => ', results)
+        print('results => ', results.xyxy)
 
         predictions = []
         for result in results.xyxy[0]:  # results.xyxy[0] contiene las detecciones
@@ -140,11 +146,10 @@ def predict():
         # Eliminar el archivo temporal
         os.remove(file_path)
 
-        return jsonify({'predictions': predictions, 'detection_image': output_image_path})
+        return jsonify({'predictions': predictions})
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
 
 if __name__ == '__main__':
-    os.makedirs('uploads', exist_ok=True)
     app.run(host='0.0.0.0', port=5000)
