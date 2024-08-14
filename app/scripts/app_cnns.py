@@ -5,7 +5,7 @@ import cv2
 import os
 
 app = Flask(__name__)
-model_path = 'app/models/tomato_disease_model_1.h5'
+model_path = '../models/tomato_disease_model_1.h5'
 
 # Verificar si el modelo existe antes de cargarlo
 if os.path.exists(model_path):

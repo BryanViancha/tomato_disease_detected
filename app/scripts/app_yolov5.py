@@ -1,4 +1,5 @@
 import os
+
 import matplotlib.patches as patches
 import matplotlib.pyplot as plt
 import torch
@@ -7,9 +8,11 @@ from flask import Flask, request, jsonify
 
 app = Flask(__name__)
 
+
 @app.route('/')
 def index():
     return "La aplicación Flask está funcionando."
+
 
 YOLOV5_PATH = os.path.join(os.path.dirname(__file__), 'yolov5')
 MODEL_PATH = os.path.join(os.path.dirname(__file__), 'yolov5/runs/train/exp/weights/best.pt')
@@ -104,7 +107,7 @@ def visualize_detections(image_path, predictions):
         ax.add_patch(rect)
         ax.text(xmin, ymin, f"{label} ({confidence:.2f})", bbox=dict(facecolor='yellow', alpha=0.5))
 
-    output_path = os.path.join('uploads', 'detections.png')
+    output_path = os.path.join('../../uploads', 'detections.png')
     plt.savefig(output_path)
     plt.close(fig)
 
@@ -122,7 +125,7 @@ def predict():
 
     try:
         # Guardar el archivo
-        file_path = os.path.join('uploads', file.filename)
+        file_path = os.path.join('../../uploads', file.filename)
         file.save(file_path)
 
         # Realizar la predicción
