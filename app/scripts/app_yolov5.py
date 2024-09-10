@@ -1,5 +1,4 @@
 import os
-
 import matplotlib.patches as patches
 import matplotlib.pyplot as plt
 import torch
@@ -14,8 +13,8 @@ def index():
     return "La aplicación Flask está funcionando."
 
 
-YOLOV5_PATH = os.path.join(os.path.dirname(__file__), 'yolov5')
-MODEL_PATH = os.path.join(os.path.dirname(__file__), 'yolov5/runs/train/exp/weights/best.pt')
+YOLOV5_PATH = os.path.join(os.path.dirname(__file__), '../../yolov5')
+MODEL_PATH = os.path.join(os.path.dirname(__file__), '../../yolov5/runs/train/exp/weights/best.pt')
 
 # Cargar el modelo YOLOv5
 model = torch.hub.load(YOLOV5_PATH, 'custom', path=MODEL_PATH, source='local')
