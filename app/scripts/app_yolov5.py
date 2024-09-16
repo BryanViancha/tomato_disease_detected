@@ -106,7 +106,7 @@ def visualize_detections(image_path, predictions):
         ax.add_patch(rect)
         ax.text(xmin, ymin, f"{label} ({confidence:.2f})", bbox=dict(facecolor='yellow', alpha=0.5))
 
-    output_path = os.path.join('../../uploads', 'detections.png')
+    output_path = os.path.join('app/processed_images', 'processed_image.png')
     plt.savefig(output_path)
     plt.close(fig)
 
@@ -124,7 +124,7 @@ def predict():
 
     try:
         # Guardar el archivo
-        file_path = os.path.join('../../uploads', file.filename)
+        file_path = os.path.join('uploads', file.filename)
         file.save(file_path)
 
         # Realizar la predicción

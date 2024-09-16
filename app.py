@@ -1,55 +1,76 @@
-import io
 import os
-
+import matplotlib.patches as patches
+import matplotlib.pyplot as plt
+import torch
 from PIL import Image
 from flask import Flask, request, jsonify
-from ultralytics import YOLO
 
 app = Flask(__name__)
 
-model = YOLO('runs/train/experiment_14/weights/best.pt')
+YOLOV5_PATH = os.path.join(os.path.dirname(__file__), 'yolov5')
+MODEL_PATH = os.path.join(os.path.dirname(__file__), 'yolov5/runs/train/exp/weights/best.pt')
+@app.route('/')
+def index():
+    return "La aplicación Flask está funcionando."
 
-OUTPUT_FOLDER = 'analisis'
+# Cargar el modelo YOLOv5
+model = torch.hub.load(YOLOV5_PATH, 'custom', path=MODEL_PATH, source='local')
 
-if not os.path.exists(OUTPUT_FOLDER):
-    os.makedirs(OUTPUT_FOLDER)
+colors = {
+    'minador': 'blue',
+    'alternaria': 'red',
+}
+
+def visualize_detections(image_path, predictions):
+    img = Image.open(image_path)
+    fig, ax = plt.subplots()
+    ax.imshow(img)
+
+    for pred in predictions:
+        xmin, ymin, xmax, ymax = pred['bbox']
+        label = pred['name']
+        confidence = pred['confidence']
+        width, height = xmax - xmin, ymax - ymin
+        rect = patches.Rectangle((xmin, ymin), width, height, linewidth=2, edgecolor=colors[label], facecolor='none')
+        ax.add_patch(rect)
+        ax.text(xmin, ymin, f"{label} ({confidence:.2f})", bbox=dict(facecolor='yellow', alpha=0.5))
+
+    output_path = os.path.join('app/processed_images', 'processed_image.png')
+    plt.savefig(output_path)
+    plt.close(fig)
+
+    return output_path
 
 
-@app.route('/yolov8', methods=['POST'])
+@app.route('/yolov5', methods=['POST'])
 def predict():
-    if 'image' not in request.files:
-        return jsonify({"error": "No ha enviado una imagen!!"}), 400
+    if 'file' not in request.files:
+        return jsonify({"error": "No ha enviado una imagen"}), 400
 
-    for filename in os.listdir(OUTPUT_FOLDER):
-        file_path = os.path.join(OUTPUT_FOLDER, filename)
-        if os.path.isfile(file_path):
-            os.remove(file_path)
+    try:
+        image_file = request.files['file']
+        results = model(image_file)
+        predictions = []
 
-    image_file = request.files['image']
-    image = Image.open(io.BytesIO(image_file.read()))
+        for result in results.xyxy[0]:  # results.xyxy[0] contiene las detecciones
+            xmin, ymin, xmax, ymax, conf, cls = result[:6]
+            predictions.append({
+                'bbox': [xmin.item(), ymin.item(), xmax.item(), ymax.item()],
+                'confidence': conf.item(),
+                'class': int(cls.item()),
+                'name': model.names[int(cls.item())]
+            })
 
-    results = model.predict(image)
+        # Visualizar detecciones
+        output_image_path = visualize_detections(file_path, predictions)
 
-    output_image_path = os.path.join(OUTPUT_FOLDER, "processed_image.png")
-    results[0].save(output_image_path)
+        # Eliminar el archivo temporal
+        os.remove(file_path)
 
-    predictions = []
-    for result in results:
-        df = result.boxes.data.cpu().numpy()
-        for box in df:
-            xmin, ymin, xmax, ymax, confidence, cls = box
-            prediction = {
-                "xmin": float(xmin),
-                "ymin": float(ymin),
-                "xmax": float(xmax),
-                "ymax": float(ymax),
-                "confidence": float(confidence),
-                "class": int(cls),
-                "name": model.names[int(cls)]
-            }
-            predictions.append(prediction)
+        return jsonify({'predictions': predictions})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 
-    return jsonify(predictions)
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000)
