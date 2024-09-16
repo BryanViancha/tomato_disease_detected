@@ -6,20 +6,23 @@ from PIL import Image
 from flask import Flask, request, jsonify
 
 app = Flask(__name__)
-
-YOLOV5_PATH = os.path.join(os.path.dirname(__file__), 'yolov5')
-MODEL_PATH = os.path.join(os.path.dirname(__file__), 'yolov5/runs/train/exp/weights/best.pt')
-@app.route('/')
-def index():
-    return "La aplicación Flask está funcionando."
-
-# Cargar el modelo YOLOv5
-model = torch.hub.load(YOLOV5_PATH, 'custom', path=MODEL_PATH, source='local')
-
 colors = {
     'minador': 'blue',
     'alternaria': 'red',
 }
+
+
+@app.route('/')
+def index():
+    return "La aplicación Flask está funcionando."
+
+
+YOLOV5_PATH = os.path.join(os.path.dirname(__file__), 'yolov5')
+MODEL_PATH = os.path.join(os.path.dirname(__file__), 'yolov5/runs/train/exp/weights/best.pt')
+
+# Cargar el modelo YOLOv5
+model = torch.hub.load(YOLOV5_PATH, 'custom', path=MODEL_PATH, source='local')
+
 
 def visualize_detections(image_path, predictions):
     img = Image.open(image_path)
@@ -45,13 +48,17 @@ def visualize_detections(image_path, predictions):
 @app.route('/yolov5', methods=['POST'])
 def predict():
     if 'file' not in request.files:
-        return jsonify({"error": "No ha enviado una imagen"}), 400
+        return jsonify({'error': 'No ha seleccionado una imagen'}), 400
 
     try:
-        image_file = request.files['file']
-        results = model(image_file)
-        predictions = []
+        file = request.files['file']
+        # Guardar el archivo
+        file_path = os.path.join('app/images_test', file.filename)
+        file.save(file_path)
 
+        results = model(file_path)
+
+        predictions = []
         for result in results.xyxy[0]:  # results.xyxy[0] contiene las detecciones
             xmin, ymin, xmax, ymax, conf, cls = result[:6]
             predictions.append({
@@ -63,8 +70,6 @@ def predict():
 
         # Visualizar detecciones
         output_image_path = visualize_detections(file_path, predictions)
-
-        # Eliminar el archivo temporal
         os.remove(file_path)
 
         return jsonify({'predictions': predictions})
