@@ -18,7 +18,7 @@ def index():
 
 
 YOLOV5_PATH = os.path.join(os.path.dirname(__file__), 'yolov5')
-MODEL_PATH = os.path.join(os.path.dirname(__file__), 'yolov5/runs/train/exp/weights/best.pt')
+MODEL_PATH = os.path.join(os.path.dirname(__file__), 'yolov5/runs/train/TomatoIA5/weights/best.pt')
 
 # Cargar el modelo YOLOv5
 model = torch.hub.load(YOLOV5_PATH, 'custom', path=MODEL_PATH, source='local')
