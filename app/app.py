@@ -42,18 +42,14 @@ def visualize_detections(image_path, predictions):
 
     return output_path
 
-
 @app.route('/yolov5', methods=['POST'])
 def predictV5():
     if 'file' not in request.files:
         return jsonify({'error': 'No se proporcionó ningún archivo'}), 400
-
     file = request.files['file']
     try:
-        # Guardar el archivo
         file_path = os.path.join('images_input', file.filename)
         file.save(file_path)
-
         results = modelv5(file_path)
         predictions = []
         for result in results.xyxy[0]:
@@ -64,11 +60,8 @@ def predictV5():
                 'class': int(cls.item()),
                 'name': modelv5.names[int(cls.item())]
             })
-
         output_image_path = visualize_detections(file_path, predictions)
-
         os.remove(file_path)
-
         return jsonify({'predictions': predictions})
     except Exception as e:
         return jsonify({'error': str(e)}), 500
