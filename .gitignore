@@ -24,3 +24,5 @@ Thumbs.db
 
 runs
 yolov5
+.env
+app/images_output/image_output.png

@@ -1,109 +1,152 @@
 import os
-import matplotlib.patches as patches
-import matplotlib.pyplot as plt
-import torch
-from PIL import Image
-from flask import Flask, request, jsonify
-import io
+import time
+from datetime import datetime, timedelta
+from threading import Timer
+import cv2
+from dotenv import load_dotenv
+from twilio.rest import Client
 from ultralytics import YOLO
 
-app = Flask(__name__)
+load_dotenv()
 
-# PATH YOLOv5 AND MODELv5
-YOLOV5_PATH = os.path.join(os.path.dirname(__file__), '../yolov5')
-MODEL_PATH = os.path.join(os.path.dirname(__file__), '../yolov5/runs/train/model1_v5/weights/best.pt')
-modelv5 = torch.hub.load(YOLOV5_PATH, 'custom', path=MODEL_PATH, source='local')
+TWILIO_ACCOUNT_SID = os.getenv('TWILIO_ACCOUNT_SID')
+TWILIO_AUTH_TOKEN = os.getenv('TWILIO_AUTH_TOKEN')
+TWILIO_PHONE_NUMBER = os.getenv('TWILIO_PHONE_NUMBER')
+TARGET_PHONE_NUMBER = os.getenv('TARGET_PHONE_NUMBER')
+IP_CAMERA = os.getenv('IP_CAMERA')
+USER = os.getenv('CAMERA_USER')
+PASSWORD = os.getenv('CAMERA_PASSWORD')
+RTSP_URL = f'rtsp://{USER}:{PASSWORD}@{IP_CAMERA}:554/user={USER}_password={PASSWORD}_channel=1_stream=0.sdp?real_stream'
+MODEL_PATH = os.getenv('MODEL_PATH')
 
-# PATH MODELv8
-modelv8 = YOLO('../../runs/train/model2_v8/weights/best.pt')
+client = Client(TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN)
 
-colors = {
-    'minador': 'blue',
-    'alternaria': 'red'
-}
+detection_counter = {}
 
-def visualize_detections(image_path, predictions):
-    img = Image.open(image_path)
-    fig, ax = plt.subplots()
-    ax.imshow(img)
 
-    for pred in predictions:
-        xmin, ymin, xmax, ymax = pred['bbox']
-        label = pred['name']
-        confidence = pred['confidence']
-        width, height = xmax - xmin, ymax - ymin
-        rect = patches.Rectangle((xmin, ymin), width, height, linewidth=2, edgecolor=colors[label], facecolor='none')
-        ax.add_patch(rect)
-        ax.text(xmin, ymin, f"{label} ({confidence:.2f})", bbox=dict(facecolor='yellow', alpha=0.5))
+def send_detection_summary():
+    global detection_counter
+    message = "Resumen de detecciones en las últimas 24 horas:\n"
+    if not detection_counter:
+        message += "- No se detectaron enfermedades\n"
+    else:
+        for disease, count in detection_counter.items():
+            message += f"- {disease}: {count} detección(es)\n"
 
-    output_path = os.path.join('images_output', 'image_output.png')
-    plt.savefig(output_path)
-    plt.close(fig)
-
-    return output_path
-
-@app.route('/yolov5', methods=['POST'])
-def predictV5():
-    if 'file' not in request.files:
-        return jsonify({'error': 'No se proporcionó ningún archivo'}), 400
-    file = request.files['file']
     try:
-        file_path = os.path.join('images_input', file.filename)
-        file.save(file_path)
-        results = modelv5(file_path)
-        predictions = []
-        for result in results.xyxy[0]:
-            xmin, ymin, xmax, ymax, conf, cls = result[:6]
-            predictions.append({
-                'bbox': [xmin.item(), ymin.item(), xmax.item(), ymax.item()],
-                'confidence': conf.item(),
-                'class': int(cls.item()),
-                'name': modelv5.names[int(cls.item())]
-            })
-        output_image_path = visualize_detections(file_path, predictions)
-        os.remove(file_path)
-        return jsonify({'predictions': predictions})
+        client.messages.create(
+            body=message,
+            from_=TWILIO_PHONE_NUMBER,
+            to=TARGET_PHONE_NUMBER
+        )
+        print(f"Mensaje resumen enviado: {message}")
     except Exception as e:
-        return jsonify({'error': str(e)}), 500
+        print(f"Error al enviar el resumen: {e}")
+
+    detection_counter = {}
 
 
-@app.route('/yolov8', methods=['POST'])
-def predictV8():
-    OUTPUT_FOLDER = 'images_output'
+def send_daily_check():
+    try:
+        client.messages.create(
+            body="Recordatorio diario: La vigilancia del invernadero está activa.",
+            from_=TWILIO_PHONE_NUMBER,
+            to=TARGET_PHONE_NUMBER
+        )
+        print("Mensaje diario enviado.")
+    except Exception as e:
+        print(f"Error al enviar el recordatorio: {e}")
 
-    if 'file' not in request.files:
-        return jsonify({'error': 'No se proporcionó ningún archivo'}), 400
 
-    for filename in os.listdir(OUTPUT_FOLDER):
-        file_path = os.path.join(OUTPUT_FOLDER, filename)
-        if os.path.isfile(file_path):
-            os.remove(file_path)
+def schedule_daily_summary():
+    now = datetime.now()
+    target_time = now.replace(hour=17, minute=0, second=0, microsecond=0)
+    if now > target_time:
+        target_time += timedelta(days=1)
+    delay = (target_time - now).total_seconds()
+    Timer(delay, send_detection_summary).start()
 
-    image_file = request.files['file']
-    image = Image.open(io.BytesIO(image_file.read()))
 
-    results = modelv8.predict(image)
+def schedule_daily_check():
+    now = datetime.now()
+    target_time = now.replace(hour=7, minute=0, second=0, microsecond=0)
+    if now > target_time:
+        target_time += timedelta(days=1)
+    delay = (target_time - now).total_seconds()
+    Timer(delay, send_daily_check).start()
 
-    output_image_path = os.path.join(OUTPUT_FOLDER, "image_output.png")
-    results[0].save(output_image_path)
 
-    predictions = []
+def connect_camera(url, retries=3):
+    for attempt in range(retries):
+        cap = cv2.VideoCapture(url)
+        if cap.isOpened():
+            print("Conexión exitosa a la cámara.")
+            return cap
+        print(f"Intento {attempt + 1} fallido. Reintentando...")
+        time.sleep(2)
+    raise Exception("No se puede acceder a la cámara RTSP después de varios intentos.")
+
+
+def process_frame(frame, model):
+    frame_resized = cv2.resize(frame, (640, 420))
+    results = model(frame_resized, conf=0.3)
+
     for result in results:
-        df = result.boxes.data.cpu().numpy()
-        for box in df:
-            xmin, ymin, xmax, ymax, confidence, cls = box
-            prediction = {
-                "xmin": float(xmin),
-                "ymin": float(ymin),
-                "xmax": float(xmax),
-                "ymax": float(ymax),
-                "confidence": float(confidence),
-                "class": int(cls),
-                "name": modelv8.names[int(cls)]
-            }
-            predictions.append(prediction)
+        for box in result.boxes:
+            cls = box.cls[0].item()
+            name = model.names[int(cls)]
+            if name != 'hojaSana':
+                if name not in detection_counter:
+                    detection_counter[name] = 1
+                else:
+                    detection_counter[name] += 1
+                return frame_resized, name, box.xyxy[0], box.conf[0].item()
+    return frame_resized, None, None, None
 
-        return jsonify({'predictions': predictions})
 
-if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000)
+def detection_loop(cap, model):
+    frame_count = 0
+    skip_frames = 2
+
+    while True:
+        ret, frame = cap.read()
+        if not ret:
+            print("Error al recibir el frame.")
+            break
+
+        if frame_count % skip_frames == 0:
+            frame_resized, disease, coords, confidence = process_frame(frame, model)
+
+            if disease and coords is not None:
+                xmin, ymin, xmax, ymax = map(int, coords)
+                color = (255, 0, 0) if disease == 'alternaria' else (0, 0, 255)
+                cv2.rectangle(frame_resized, (xmin, ymin), (xmax, ymax), color, 2)
+                cv2.putText(frame_resized, f"{disease} ({confidence:.2f})",
+                            (xmin, ymin - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, color, 2)
+
+            cv2.imshow("Detección en tiempo real con YOLOv8", frame_resized)
+
+        if cv2.waitKey(1) & 0xFF == ord('q'):
+            break
+
+        frame_count += 1
+
+
+if __name__ == "__main__":
+    try:
+        schedule_daily_summary()
+        schedule_daily_check()
+
+        cap = connect_camera(RTSP_URL)
+
+        model = YOLO(MODEL_PATH)
+
+        detection_loop(cap, model)
+
+    except (cv2.error, Exception) as e:
+        print(f"Error: {e}")
+
+    finally:
+        if 'cap' in locals():
+            cap.release()
+        cv2.destroyAllWindows()
