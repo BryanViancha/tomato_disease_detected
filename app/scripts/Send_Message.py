@@ -21,7 +21,7 @@ def send_message(disease):
     )
 
 # Ruta para recibir la predicción
-@app.route('/prediccion', methods=['POST'])
+@app.route('/twilio', methods=['POST'])
 def receive_prediction():
     data = request.json
     if 'prediction' in data:
