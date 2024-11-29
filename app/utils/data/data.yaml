@@ -1,0 +1,6 @@
+train: images/train                    # Ruta a las imágenes de entrenamiento
+val: images/val                      # Ruta a las imágenes de validación
+
+# Número de clases y nombres de las clases
+nc: 2
+names: ['minador', 'alternaria']
