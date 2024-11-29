@@ -1,3 +1,4 @@
+# SCRIPT PARA EJECUTAR MOVIENTO DE CAMARA PTZ
 import time
 from onvif import ONVIFCamera
 

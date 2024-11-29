@@ -1,3 +1,4 @@
+# SCRIPT PARA REDIMENSIONAMIENTO DE IMAGENES
 import os
 from PIL import Image
 
@@ -11,11 +12,9 @@ def resize_image(image, max_size=2560):
     width, height = image.size
 
     if width > height:
-        # Horizontal image
         new_width = max_size
         new_height = int(height * (max_size / width))
     else:
-        # Vertical image
         new_height = max_size
         new_width = int(width * (max_size / height))
 

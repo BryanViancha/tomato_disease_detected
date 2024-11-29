@@ -1,3 +1,4 @@
+# SCRIPT PARA ELIMINAR FONDO DE IMAGENES
 import os
 from rembg import remove
 

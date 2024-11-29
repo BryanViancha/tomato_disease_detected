@@ -1,28 +1,29 @@
+# SCRIPT PARA HACER PRUEBAS MEDIANTE ENVIO DE IMAGENES CON POSTMAN
+# CONSUMIENDO LOS ENDPOINTS DE YOLOV5 Y YOLOV8
+import io
 import os
+import cv2
 import matplotlib.patches as patches
 import matplotlib.pyplot as plt
+import numpy as np
 import torch
 from PIL import Image
 from flask import Flask, request, jsonify
-import io
 from ultralytics import YOLO
-import cv2
-import numpy as np
 
 app = Flask(__name__)
 
-# PATH YOLOv5 AND MODELv5
 YOLOV5_PATH = os.path.join(os.path.dirname(__file__), '../yolov5')
 MODEL_PATH = os.path.join(os.path.dirname(__file__), '../yolov5/runs/train/model1_v5/weights/best.pt')
 modelv5 = torch.hub.load(YOLOV5_PATH, 'custom', path=MODEL_PATH, source='local')
 
-# PATH MODELv8
 modelv8 = YOLO('../../runs/train/model1_v8/weights/best.pt')
 
 colors = {
     'minador': 'blue',
     'alternaria': 'red'
 }
+
 
 def visualize_detections(image_path, predictions):
     img = Image.open(image_path)
@@ -43,6 +44,7 @@ def visualize_detections(image_path, predictions):
     plt.close(fig)
 
     return output_path
+
 
 @app.route('/yolov5', methods=['POST'])
 def predictV5():
@@ -76,7 +78,6 @@ def predictV8():
     if 'file' not in request.files:
         return jsonify({'error': 'No se proporcionó ningún archivo'}), 400
 
-    # Limpiar el directorio de salida antes de guardar la nueva imagen procesada
     for filename in os.listdir(OUTPUT_FOLDER):
         file_path = os.path.join(OUTPUT_FOLDER, filename)
         if os.path.isfile(file_path):
@@ -85,10 +86,8 @@ def predictV8():
     image_file = request.files['file']
     image = Image.open(io.BytesIO(image_file.read()))
 
-    # Realizar la predicción con el modelo YOLOv8
     results = modelv8.predict(image)
 
-    # Convertir la imagen de entrada a formato adecuado para OpenCV (RGB)
     img_cv2 = cv2.cvtColor(np.array(image), cv2.COLOR_RGB2BGR)
 
     predictions = []
@@ -98,9 +97,7 @@ def predictV8():
             xmin, ymin, xmax, ymax, confidence, cls = box
             class_name = modelv8.names[int(cls)]
 
-            # Filtrar solo las predicciones de minador y alternaria
             if class_name in ['minador', 'alternaria']:
-                # Dibujar solo "minador" y "alternaria" en la imagen de salida
                 color = (0, 0, 255) if class_name == 'alternaria' else (255, 0, 0)
                 cv2.rectangle(img_cv2, (int(xmin), int(ymin)), (int(xmax), int(ymax)), color, 6)
                 cv2.putText(img_cv2, f"{class_name} ({confidence:.2f})",
@@ -117,7 +114,6 @@ def predictV8():
                 }
                 predictions.append(prediction)
 
-    # Guardar la imagen con las detecciones de "minador" y "alternaria"
     output_image_path = os.path.join(OUTPUT_FOLDER, "image_output.png")
     cv2.imwrite(output_image_path, img_cv2)
 

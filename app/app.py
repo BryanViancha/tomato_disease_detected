@@ -1,3 +1,5 @@
+# SCRIPT PRINCIPAL DEL PROYECTO, EJECUTA CONEXION A CAMARA PTZ EN TIEMPO REAL,
+# DETECCIONES CON MODELO V8 Y ENVIO DE MENSAJERIA CON TWILIO
 import os
 import time
 from datetime import datetime, timedelta
@@ -27,7 +29,7 @@ client = Client(TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN)
 
 app = Flask(__name__)
 
-detection_counter = {} # Contador de detecciones
+detection_counter = {}
 
 def send_daily_check():
     try:

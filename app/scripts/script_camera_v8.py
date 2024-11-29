@@ -1,3 +1,5 @@
+# SCRIPT DE PRUEBA PARA CONSUMIR MODELO DE YOLOV8 MEDIANTE LA CAMARA
+
 import time
 import cv2
 from onvif import ONVIFCamera
