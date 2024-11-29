@@ -80,11 +80,13 @@
 - Instalacion torch ```pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cpu```
 
 ### 4. Ejecutar el archivo principal para correr el proyecto de deteccion
-- Antes de ejecutar el app.py, dirigirse al archivo .ENV donde estan las variables de entorno y remplazar:
+- Antes de ejecutar el app.py, crear un archivo .ENV donde se crearan las variables de entorno y remplazar:
 
 - TWILIO_ACCOUNT_SID por su token generado en twilio
 
 - TWILIO_AUTH_TOKEN por su token generado en twilio
+
+- TWILIO_PHONE_NUMBER numero de twilio
 
 - TARGET_PHONE_NUMBER por su numero de telefono enlazado desde twilio a donde le llegaran los mensajes
 
@@ -93,6 +95,8 @@
 - CAMERA_USER por la usuario de su camara
 
 - CAMERA_PASSWORD por la clave de su camara
+
+- MODEL_PATH la ruta del modelo YOLO
 
 - El script principal del proyecto es app.py, para ejecutar el codigo en la carpeta app esta el script, ejecutar el siguiente comando ```python app.py```
 
