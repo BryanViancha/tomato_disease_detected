@@ -98,7 +98,7 @@ def webhook():
     response = ""
     if incoming_msg == 'resumen':
         global detection_counter
-        message = "Resumen de detecciones en las últimas 24 horas:\n"
+        message = "Resumen de detecciones hasta el momento:\n"
         total_detections = sum(detection_counter.values())
 
         if total_detections == 0:
@@ -118,7 +118,7 @@ def webhook():
         except Exception as e:
             print(f"Error al enviar el resumen: {e}")
     else:
-        respons = "Por favor, envía únicamente la palabra 'resumen' para recibir el resumen."
+        respons = "Por favor, envía únicamente la palabra 'resumen' para recibir el resumen de las detecciones."
         try:
             client.messages.create(
                 body=respons,
@@ -179,7 +179,7 @@ def detection_loop(cap, model):
                 cv2.putText(frame_resized, f"{disease} ({confidence:.2f})",
                             (xmin, ymin - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, color, 2)
 
-            cv2.imshow("Detección en tiempo real con YOLOv8", frame_resized)
+            cv2.imshow("Deteccion en tiempo real con YOLOv8", frame_resized)
 
         if cv2.waitKey(1) & 0xFF == ord('q'):
             break

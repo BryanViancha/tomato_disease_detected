@@ -24,18 +24,16 @@
 ### 2. Instalacion y configuracion de entorno de Python:
 2.1. Primero descargar e instalar Python version recomendada
 
-2.2. Crear un entorno de desarollo con python para instalar las dependencias 
+2.2. Crear un entorno de desarollo con python para instalar las dependencias o con anaconda cualquier entorno de dependencias funciona
+
 ``` python -m venv nombre_del_entorno```
 
-2.3. Activar entorno creado
+2.3. Activar entorno creado con python
 ``` venv\Scripts\activate```
 
-2.4. Despues de activado el entorno para instalar todos los paquetes y librerias del proyecto, ejecutar el siguente comando
+2.4. Despues de activado el entorno para instalar todos los paquetes y librerias del proyecto, ejecutar el siguente comando esto instalara las libreiras y paquetes del proyecto
+
    ```pip install -r requirements.txt```
-
-2.5. Creacion de archivo requirements, listado de las las bibliotecas y paquetes usados
-```pip freeze > requirements.txt```
-
 ### 3. Configuracion e instalacion de YOLOv8
 3.1. En la raiz del proyecto instalar YOLOv8 ```pip install ultralytics```
 
@@ -80,7 +78,7 @@
 - Instalacion torch ```pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cpu```
 
 ### 4. Ejecutar el archivo principal para correr el proyecto de deteccion
-- Antes de ejecutar el app.py, crear un archivo .ENV donde se crearan las variables de entorno y remplazar:
+- Antes de ejecutar el script app.py, crear un archivo .ENV donde se crearan las variables de entorno y remplazar:
 
 - TWILIO_ACCOUNT_SID por su token generado en twilio
 
